@@ -1,5 +1,6 @@
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -13,13 +14,15 @@ public class TruthGUI implements ActionListener, Runnable
 	JScrollPane resultPane = null;
 	JTable variableTable = null;  //columns will be "A", "B", etc.
 	JTable resultTable = null;  //columns will be "A or B", "A and B", "A implies B", etc.
+	DefaultTableModel variableModel;
+	DefaultTableModel resultModel;
 	JMenuBar menubar = null;
 	JMenu menu = null;
 	JMenuItem addVar = null;
 	JMenuItem removeVar = null;
 	Font text = null;
 	int variables = 2;
-	int maxVars = 4;
+	int maxVars = 5;
 	
 	private void createGUI()  //sets up the frame when the program is run
 	{
@@ -71,22 +74,21 @@ public class TruthGUI implements ActionListener, Runnable
 	private void generateTables()
 	{
 		/*
-		 * this method should be used to generate the "variables"
+		 * this method should be used to generate the initial "variables"
 		 * and "results" tables and update the display to show them
 		 */
-		int columns = variables;
-		int rows = (int)Math.pow(2, variables);
-		
-		//setup the variable table
-		variableTable = new JTable(rows, columns);
-		for (int c = columns - 1; c >= 0; c--)
-			for (int r = 0; r < rows; r++)
-				variableTable.setValueAt((r/(int)Math.pow(2, c))%2, r, c);
+
+		//instantiate the variable table
+		variableModel = generateVariableModel();
+		variableTable = new JTable(variableModel);
 		
 		//setup the result table
-		resultTable = generateResultTable();
+		resultModel = generateResultModel();
+		resultTable = new JTable(resultModel);
 		
 		//make sure columns are formatted correctly
+		
+		
 		DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
 		centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
 		variableTable.setDefaultRenderer(Object.class, centerRenderer);
@@ -99,13 +101,36 @@ public class TruthGUI implements ActionListener, Runnable
 		//resultTable.setAutoResizeMode(0);
 	}
 	
-	public JTable generateResultTable()
+	public DefaultTableModel generateVariableModel()
+	{
+		int columns = variables;
+		int rows = (int)Math.pow(2, variables);
+		
+		//setup the variable table model and populate it with values
+		DefaultTableModel newModel = new DefaultTableModel(rows, columns);
+		for (int c = columns - 1; c >= 0; c--)
+			for (int r = 0; r < rows; r++)
+				newModel.setValueAt((r/(int)Math.pow(2, c))%2, r, c);
+		
+		return newModel;
+	}
+	
+	public DefaultTableModel generateResultModel()
 	{
 		String[] columnNames = {"AND", "OR", "NOR", "XOR","NAND"};
 		Object[][] rowData = null;
 		
 		// determines what column names and rowData we are using based on # of vars
-		if (variables == 2)
+		if (variables == 1)
+		{			
+			Object[][] data =
+				{
+						 {0, 0, 1, 0, 1},
+						 {1, 1, 0, 1, 0}
+				};
+			rowData = data;
+		}
+		else if (variables == 2)
 		{			
 			Object[][] data =
 				{
@@ -154,10 +179,56 @@ public class TruthGUI implements ActionListener, Runnable
 				};
 			rowData = data;
 		}
+		else if (variables == 5)
+		{
+			Object[][] data =
+				{
+						 {0, 0, 1, 0, 1},
+						 {0, 1, 0, 1, 1},
+						 {0, 1, 0, 1, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 1, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 1, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 1, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {1, 1, 0, 0, 0}
+				};
+			rowData = data;
+		}
+		else
+			rowData = null;
 		
-		
-		JTable table = new JTable(rowData, columnNames);
-		return table;
+		DefaultTableModel model = new DefaultTableModel(rowData, columnNames);
+		return model;
+	}
+	
+	public void updateTables()
+	{
+		variableTable.setModel(generateVariableModel());
+		resultTable.setModel(generateResultModel());
 	}
 
 	public void actionPerformed(ActionEvent e)  //events for clicking items
@@ -169,15 +240,15 @@ public class TruthGUI implements ActionListener, Runnable
 			if (variables < maxVars)
 			{
 				variables++;
-				generateTables();
+				updateTables();
 			}
 		}
 		else if (source == removeVar)
 		{
-			if (variables > 0)
+			if (variables > 1)
 			{
 				variables--;
-				generateTables();
+				updateTables();
 			}
 		}
 	}
