@@ -1,4 +1,6 @@
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -7,17 +9,20 @@ public class TruthGUI implements ActionListener, Runnable
 {
 	JFrame frame = null;
 	JPanel main = null;
+	JPanel tablePanel = null;
 	JScrollPane variablePane = null;
 	JScrollPane resultPane = null;
 	JTable variableTable = null;  //columns will be "A", "B", etc.
 	JTable resultTable = null;  //columns will be "A or B", "A and B", "A implies B", etc.
+	DefaultTableModel variableModel;
+	DefaultTableModel resultModel;
 	JMenuBar menubar = null;
 	JMenu menu = null;
 	JMenuItem addVar = null;
 	JMenuItem removeVar = null;
 	Font text = null;
-	
 	int variables = 2;
+	int maxVars = 5;
 	
 	private void createGUI()  //sets up the frame when the program is run
 	{
@@ -25,7 +30,7 @@ public class TruthGUI implements ActionListener, Runnable
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setJMenuBar(menubar);
 		frame.add(main);
-		frame.setPreferredSize(new Dimension(750, 500));
+		frame.setPreferredSize(new Dimension(762, 300));
 		frame.pack();
 		frame.setLocationRelativeTo(null);
 		frame.setResizable(false);
@@ -38,13 +43,14 @@ public class TruthGUI implements ActionListener, Runnable
 		main = new JPanel(new GridLayout(1, 2));
 		
 		//these lines are just initializers for testing
-		variableTable = new JTable(8, 2);
-		resultTable = new JTable(8, 10);
-		variableTable.setAutoResizeMode(0);
-		resultTable.setAutoResizeMode(0);
+		//variableTable = new JTable(8, 2);
+		//resultTable = new JTable(8, 10);
+		//variableTable.setAutoResizeMode(0);
+		//resultTable.setAutoResizeMode(0);
 		//to actually create the tables, remove these and just 
 		//use the generateTables() method
 		
+		generateTables();
 		variablePane = new JScrollPane(variableTable);
 		resultPane = new JScrollPane(resultTable);
 		menubar = new JMenuBar();
@@ -68,26 +74,182 @@ public class TruthGUI implements ActionListener, Runnable
 	private void generateTables()
 	{
 		/*
-		 * this method should be used to generate the "variables"
+		 * this method should be used to generate the initial "variables"
 		 * and "results" tables and update the display to show them
 		 */
-		variableTable.setAutoResizeMode(0);
-		resultTable.setAutoResizeMode(0);
+
+		//instantiate the variable table
+		variableModel = generateVariableModel();
+		variableTable = new JTable(variableModel);
+		
+		//setup the result table
+		resultModel = generateResultModel();
+		resultTable = new JTable(resultModel);
+		
+		//make sure columns are formatted correctly
+		
+		
+		DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+		centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
+		variableTable.setDefaultRenderer(Object.class, centerRenderer);
+		resultTable.setDefaultRenderer(Object.class, centerRenderer);
+		
+		//refresh tables
+		variableTable.setRowSelectionAllowed(false);
+		resultTable.setRowSelectionAllowed(false);
+		//variableTable.setAutoResizeMode(0);
+		//resultTable.setAutoResizeMode(0);
 	}
 	
+	public DefaultTableModel generateVariableModel()
+	{
+		int columns = variables;
+		int rows = (int)Math.pow(2, variables);
+		
+		//setup the variable table model and populate it with values
+		DefaultTableModel newModel = new DefaultTableModel(rows, columns);
+		for (int c = columns - 1; c >= 0; c--)
+			for (int r = 0; r < rows; r++)
+				newModel.setValueAt((r/(int)Math.pow(2, c))%2, r, c);
+		
+		return newModel;
+	}
+	
+	public DefaultTableModel generateResultModel()
+	{
+		String[] columnNames = {"AND", "OR", "NOR", "XOR","NAND"};
+		Object[][] rowData = null;
+		
+		// determines what column names and rowData we are using based on # of vars
+		if (variables == 1)
+		{			
+			Object[][] data =
+				{
+						 {0, 0, 1, 0, 1},
+						 {1, 1, 0, 1, 0}
+				};
+			rowData = data;
+		}
+		else if (variables == 2)
+		{			
+			Object[][] data =
+				{
+						 {0, 0, 1, 0, 1},
+						 {0, 1, 0, 1, 1},
+						 {0, 1, 0, 1, 1},
+						 {1, 1, 0, 0, 0}
+				};
+			rowData = data;
+		}
+		else if (variables == 3)
+		{
+			Object[][] data =
+				{
+						 {0, 0, 1, 0, 1},
+						 {0, 1, 0, 1, 1},
+						 {0, 1, 0, 1, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 1, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {1, 1, 0, 0, 0}
+				};
+			rowData = data;
+		}
+		else if (variables == 4)
+		{
+			Object[][] data =
+				{
+						 {0, 0, 1, 0, 1},
+						 {0, 1, 0, 1, 1},
+						 {0, 1, 0, 1, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 1, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 1, 1},
+						 {0, 1, 0, 1, 1},
+						 {0, 1, 0, 1, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 1, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {1, 1, 0, 0, 0}
+				};
+			rowData = data;
+		}
+		else if (variables == 5)
+		{
+			Object[][] data =
+				{
+						 {0, 0, 1, 0, 1},
+						 {0, 1, 0, 1, 1},
+						 {0, 1, 0, 1, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 1, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 1, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 1, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {0, 1, 0, 0, 1},
+						 {1, 1, 0, 0, 0}
+				};
+			rowData = data;
+		}
+		else
+			rowData = null;
+		
+		DefaultTableModel model = new DefaultTableModel(rowData, columnNames);
+		return model;
+	}
+	
+	public void updateTables()
+	{
+		variableTable.setModel(generateVariableModel());
+		resultTable.setModel(generateResultModel());
+	}
+
 	public void actionPerformed(ActionEvent e)  //events for clicking items
 	{
 		Object source = e.getSource();
 		
 		if (source == addVar)
 		{
-			variables++;
-			generateTables();
+			if (variables < maxVars)
+			{
+				variables++;
+				updateTables();
+			}
 		}
 		else if (source == removeVar)
 		{
-			variables--;
-			generateTables();
+			if (variables > 1)
+			{
+				variables--;
+				updateTables();
+			}
 		}
 	}
 	
